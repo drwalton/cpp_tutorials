@@ -1,6 +1,6 @@
 #include <algorithm>
 #include <iostream>
-#include <vector>
+#include <list>
 
 class Resource
 {
@@ -13,7 +13,9 @@ public:
 class Owner
 {
 	std::shared_ptr<Resource> resource_;
+	std::unique_ptr<Resource> otherResource_;
 public:
+	Owner() :otherResource_(new Resource(1)) {};
 	Owner& resource(std::shared_ptr<Resource> r)
 	{
 		resource_ = r;
@@ -22,13 +24,13 @@ public:
 	const std::shared_ptr<Resource> resource() { return resource_; };
 };
 
-std::vector<Owner> makeOwners() 
+std::list<Owner> makeOwners() 
 {
 	auto resource = std::make_shared<Resource>(10);
 
 	std::cout << "Resource use count: " << resource.use_count() << std::endl;
 
-	std::vector<Owner> owners;
+	std::list<Owner> owners;
 
 	for (size_t i = 0; i < 5; ++i) {
 		Owner owner;
@@ -55,24 +57,28 @@ int main() {
 	// When the count drops to 1 there are no code references to the pointed
 	// object and it'll be deleted.
 
+	{
+		std::unique_ptr<Resource> ptr = std::make_unique<Resource>(1);
+	}
+
 	auto owners = makeOwners();
-	std::cout << "Resource use count: " << owners[0].resource().use_count() << std::endl;
+	std::cout << "Resource use count: " << owners.begin()->resource().use_count() << std::endl;
 
 	std::cout << "Deleting the first owner object decrements the resource count" << std::endl;
 	owners.erase(owners.begin());
-	std::cout << "Resource use count: " << owners[0].resource().use_count() << std::endl;
+	std::cout << "Resource use count: " << owners.begin()->resource().use_count() << std::endl;
 
 	std::cout << "Deleting another owner object..." << std::endl;
 	owners.erase(owners.begin());
-	std::cout << "Resource use count: " << owners[0].resource().use_count() << std::endl;
+	std::cout << "Resource use count: " << owners.begin()->resource().use_count() << std::endl;
 
 	std::cout << "Deleting another owner object..." << std::endl;
 	owners.erase(owners.begin());
-	std::cout << "Resource use count: " << owners[0].resource().use_count() << std::endl;
+	std::cout << "Resource use count: " << owners.begin()->resource().use_count() << std::endl;
 
 	std::cout << "Deleting another owner object..." << std::endl;
 	owners.erase(owners.begin());
-	std::cout << "Resource use count: " << owners[0].resource().use_count() << std::endl;
+	std::cout << "Resource use count: " << owners.begin()->resource().use_count() << std::endl;
 
 	std::cout << "There's only one owner left (note use_count is 2)." << std::endl;
 	std::cout << "When we delete this, the resource gets deleted." << std::endl;
